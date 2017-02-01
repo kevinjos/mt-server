@@ -1,0 +1,16 @@
+Adafruit-BBIO==1.0.1
+Adafruit-GPIO==1.0.1
+Adafruit-PureIO==0.2.1
+appdirs==1.4.0
+click==6.7
+Flask==0.12
+itsdangerous==0.24
+Jinja2==2.9.5
+MarkupSafe==0.23
+packaging==16.8
+pyparsing==2.1.10
+pyserial==3.2.1
+six==1.10.0
+spidev==3.2
+Werkzeug==0.11.15
+git+http://github.com/kevinjos/Adafruit_Python_BME280.git@master
