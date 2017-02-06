@@ -17,12 +17,18 @@ class CO2Meter(serial.Serial):
         self.write(CO2Meter.TAKE_ONE_CMD)
         time.sleep(.01)
         resp = self.read(7)
-        high = ord(resp[3])
-        low = ord(resp[4])
-        co2 = (high * 256) + low
-        return co2
+        try:
+            high = ord(resp[3])
+            low = ord(resp[4])
+            co2 = (high * 256) + low
+            return co2
+        except IndexError:
+            self.close()
+            self.open()
+            raise Exception("reset co2 meter")
 
 if __name__ == '__main__':
-    meter = CO2Meter("/dev/ttyS0")
+    meter = CO2Meter("/dev/ttyO5", timeout=1)
     while True:
-        print("CO2 ppm=[%s]" % meter.read())
+        print("CO2 ppm=[%s]" % meter.readone())
+        time.sleep(1)
