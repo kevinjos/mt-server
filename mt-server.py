@@ -5,11 +5,13 @@ from logging.handlers import RotatingFileHandler
 import json
 import time
 import threading
+import signal
 
 from opc import OPCClient
 from co2meter import CO2Meter
 from openscale import OpenScale
 from Adafruit_BME280 import BME280
+
 
 app = Flask(__name__)
 
@@ -95,7 +97,7 @@ def sensors():
 
 
 def dimlights(a, z):
-    duration = 60.0 * 30.0 # in seconds
+    duration = 60.0 * 1 # in seconds
     maxbyi = (255, 61, 255)
     stepbyi = (1, 0.24, 1.2)
     def f(i, a, z):
@@ -132,27 +134,35 @@ def lightson():
     return "ok"
 
 
-def config_logger():
-    formatter = logging.Formatter(
-        "%(asctime)s %(pathname)s:%(lineno)d %(levelname)s - %(message)s")
-    handler = RotatingFileHandler('/tmp/mt-server.log', maxBytes=99999, backupCount=5)
-    handler.setFormatter(formatter)
-    app.logger.addHandler(handler)
+def close():
+    app.logger.info("stopping server")
+    co2meter.close()
+    openscale.close()
+    app.logger.info("stopped server")
+
+
+if __name__ == '__main__':
+    app.logger_name = "mt-server"
+    lfh = RotatingFileHandler("/tmp/mt-server.log", maxBytes=10E5, backupCount=3)
+    formatter = logging.Formatter('[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s')
+    lfh.setFormatter(formatter)
+    app.logger.addHandler(lfh)
     app.logger.setLevel(logging.INFO)
+    accesslog = logging.getLogger('werkzeug')
+    accesslog.addHandler(lfh)
 
-
-if __name__ == "__main__":
-    config_logger()
-    app.logger.info("starting mtserver")
-    openscale = initobj(OpenScale, "/dev/ttyUSB0", timeout=1)
-    co2meter = initobj(CO2Meter, "/dev/ttyO5", timeout=1)
+    app.logger.info("starting mt-server")
     bme280 = initobj(BME280)
     opc = initobj(OPCClient, "localhost:7890")
+    co2meter = initobj(CO2Meter, "/dev/ttyO5", timeout=0.1)
+    openscale = initobj(OpenScale, "/dev/ttyUSB0", timeout=1)
+    app.logger.info("started mt-server")
+
+    signal.signal(signal.SIGTERM, close)
     try:
         app.run()
     except Exception as e:
-        app.logger.error(e)
+        app.logger.error("unknown exception", e)
     finally:
-        co2meter.close() if co2meter else None
-        openscale.close() if openscale else None
-        app.logger.info("stopping mtserver")
+        close()
+

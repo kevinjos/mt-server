@@ -9,18 +9,23 @@ class OpenScale(serial.Serial):
 
     def __init__(self, *args, **kwargs):
         super(OpenScale, self).__init__(*args, **kwargs)
+        self.write(self.READCHR)
+        time.sleep(0.1)
+        self.readall()
         self.flush()
 
     def tare(self):
         self.write(self.MENUCHR)
-        time.sleep(1)
+        time.sleep(0.1)
         self.write(self.TARECHR)
-        time.sleep(1)
+        time.sleep(0.1)
         self.write(self.MENUCHR)
-        time.sleep(1)
+        time.sleep(0.1)
+        self.readall()
+        self.flush
 
     def readone(self):
         self.write(self.READCHR)
-        time.sleep(1)
+        time.sleep(0.1)
         r = self.readall()
 	return r
